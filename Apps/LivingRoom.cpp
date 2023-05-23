@@ -19,7 +19,7 @@ string	dir = "C:/Users/Elija/source/repos/Graphics/Assets/", objDir = dir+"Objec
 Mesh	room, dresser, sofa, rug, tv;
 Mesh   *meshes[] = { &room, &dresser, &sofa, &rug, &tv };
 int		nMeshes = sizeof(meshes)/sizeof(Mesh *);
-vec3	light(20.f, 20.f, 20.f);
+vec3	light(10.f, 20.f, 0.f);
 
 // Display
 
@@ -41,11 +41,11 @@ void MakeScene() {
 	ReadObject(sofa, "Sofa.obj", "Sofa.png");
 	ReadObject(rug, "Rug.obj", "Rug.png");
 	ReadObject(tv, "TV.obj", "TV.png");
-	room.toWorld = Scale(1.8f, 1, 1);
-	dresser.toWorld = Translate(-1.4f, -.8f, -.2f)*RotateY(90)*Scale(.4f);
-	sofa.toWorld = Translate(.4f, -.75f, -.2f)*RotateY(-90)*Scale(.5f, 1, 1);
-	rug.toWorld = Translate(-.4f, -.99f, -.2f)*Scale(.75f);
-	tv.toWorld = Translate(-1.4f, -.45f, -.2f) * RotateY(90) * Scale(.2f);
+	room.toWorld = Translate(0, -1.1, 0)*RotateX(90)*Scale(1.8f, 1.2, .1f);
+	dresser.toWorld = Translate(-1, -.8f, .15f)*RotateY(90)*Scale(.4f);
+	sofa.toWorld = Translate(.8f, -.75f, .15f)*RotateY(-90)*Scale(.5f, 1, 1);
+	rug.toWorld = Translate(0, -.99f, .15f)*Scale(.75f);
+	tv.toWorld = Translate(-1.f, -.45f, .15f) * RotateY(90) * Scale(.2f);
 }
 
 // Callbacks

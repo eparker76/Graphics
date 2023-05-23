@@ -192,6 +192,7 @@ void ShadowDraw(Camera camera, vec3 light, int winWidth, int winHeight, Mesh *me
 	glClear(GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
 	glUseProgram(shadowProgram);
+	glCullFace(GL_FRONT);
 	SetUniform(shadowProgram, "depth_vp", depthVP);
 	for (int i = 0; i < nMeshes; i++)
 		MeshDraw(camera, light, meshes[i]);
@@ -199,6 +200,7 @@ void ShadowDraw(Camera camera, vec3 light, int winWidth, int winHeight, Mesh *me
 	// draw scene to visible buffer
 	glViewport(0, 0, winWidth, winHeight);
 	glUseProgram(mainProgram);
+	glCullFace(GL_BACK);
 	glActiveTexture(GL_TEXTURE0+shadowTextureUnit);
 	glBindTexture(GL_TEXTURE_2D, shadowTexture);
 	SetUniform(mainProgram, "shadow", shadowTextureUnit);
