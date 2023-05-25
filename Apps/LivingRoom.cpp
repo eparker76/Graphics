@@ -13,13 +13,14 @@
 // view, display parameters
 int		winWidth = 1024, winHeight = 1024;
 Camera	camera(0, 0, winWidth, winHeight, vec3(0, 7, 0), vec3(0, 0, -8));
+vec3 light = (20.0, 20.0, 20.0);
 
 // scene
 string	dir = "C:/Users/Elija/source/repos/Graphics/Assets/", objDir = dir+"Objects/", imgDir = dir+"Images/";
 Mesh	room, dresser, sofa, rug, tv;
 Mesh   *meshes[] = { &room, &dresser, &sofa, &rug, &tv };
 int		nMeshes = sizeof(meshes)/sizeof(Mesh *);
-vec3	light(10.f, 20.f, 0.f);
+
 
 // Display
 
@@ -71,12 +72,38 @@ void Resize(int width, int height) {
 	glViewport(0, 0, width, height);
 }
 
+void LightMove(int key, bool press, bool shift, bool control) {
+	if (key == GLFW_KEY_A && press == GLFW_PRESS)
+		light.x += 5.0;
+	if (key == GLFW_KEY_D && press == GLFW_PRESS)
+		light.x -= 5.0;
+	if (key == GLFW_KEY_W && press == GLFW_PRESS)
+		light.z -= 5.0;
+	if (key == GLFW_KEY_S && press == GLFW_PRESS)
+		light.z += 5.0;
+	if (key == GLFW_KEY_Q && press == GLFW_PRESS)
+		light.y += 5.0;
+	if (key == GLFW_KEY_E && press == GLFW_PRESS)
+		light.y -= 5.0;
+}
+
+
 // Application
 
 const char *usage = R"(
+	Camera Movement:
 	mouse-drag:  rotate
 	with shift:  translate xy
 	mouse-wheel: translate z
+	
+	Light Movement:
+	A: translate x
+	D: translate -x;
+	W: translate -z;
+	S: translate z;
+	Q: translate y;
+	E: translate -y;
+	
 )";
 
 
@@ -90,6 +117,7 @@ int main(int ac, char **av) {
 	RegisterMouseButton(MouseButton);
 	RegisterMouseWheel(MouseWheel);
 	RegisterResize(Resize);
+	RegisterKeyboard(LightMove);
 	printf("Usage: %s", usage);
 	// event loop
 	while (!glfwWindowShouldClose(w)) {
