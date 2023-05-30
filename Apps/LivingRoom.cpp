@@ -12,7 +12,7 @@
 
 // view, display parameters
 int		winWidth = 1024, winHeight = 1024;
-Camera	camera(0, 0, winWidth, winHeight, vec3(0, 7, 0), vec3(0, 0, -8));
+Camera	camera(0, 0, winWidth, winHeight, vec3(0, 7, 0), vec3(0, 0, -80));
 vec3 light = (20.0, 20.0, 20.0);
 
 // scene
@@ -42,11 +42,11 @@ void MakeScene() {
 	ReadObject(sofa, "Sofa.obj", "Sofa.png");
 	ReadObject(rug, "Rug.obj", "Rug.png");
 	ReadObject(tv, "TV.obj", "TV.png");
-	room.toWorld = Translate(0, -1.1, 0)*RotateX(90)*Scale(1.8f, 1.2, .1f);
-	dresser.toWorld = Translate(-1, -.8f, .15f)*RotateY(90)*Scale(.4f);
-	sofa.toWorld = Translate(.8f, -.75f, .15f)*RotateY(-90)*Scale(.5f, 1, 1);
-	rug.toWorld = Translate(0, -.99f, .15f)*Scale(.75f);
-	tv.toWorld = Translate(-1.f, -.45f, .15f) * RotateY(90) * Scale(.2f);
+	room.toWorld = Translate(0, -3.5, 0)*RotateX(90)*Scale(20, 20, .1f);
+	dresser.toWorld = Translate(-10, -1.8, 0)*RotateY(90)*Scale(3);
+	sofa.toWorld = Translate(4, -1.3, 0)*RotateY(-90)*Scale(8);
+	rug.toWorld = Translate(-2.5, -3.4, 0)*Scale(5, 30, 5);
+	tv.toWorld = Translate(-10, 1, 0) * RotateY(90) * Scale(2);
 }
 
 // Callbacks
