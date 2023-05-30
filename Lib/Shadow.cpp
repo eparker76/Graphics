@@ -60,7 +60,7 @@ const char *mainFrag = R"(
 	in vec2 vUv;
 	in vec4 shadowCoord;
 	uniform sampler2D textureImage;
-	uniform sampler2DShadow shadow;
+	uniform sampler2D shadow;
 	uniform vec3 lightColor;
 	uniform vec3 color = vec3(1, 1, 0);
 	uniform int edgeSamples;
@@ -75,50 +75,31 @@ const char *mainFrag = R"(
 	uniform float amb = .1, dif = .7, spc =.7;		// ambient, diffuse, specular
 	out vec4 pColor;
 
-	vec2 uniformSamples[32] = vec2[](vec2(0.49338352, -0.58302237), vec2(-0.39376479, 0.12189280), 
-	vec2(-0.38876976, 0.39560871), vec2(-0.82853213, 0.29121478), vec2(-0.62251564, 0.27426500), 
-	vec2(0.44906493, 0.72971920), vec2(0.99295605, 0.02762058), vec2(-0.61054051, -0.74474791), 
-	vec2(-0.49073490, 0.09812672), vec2(0.64145907, -0.23052487), vec2(-0.47168601, 0.81892203), 
-	vec2(0.95110052, 0.97483373), vec2(0.84048903, 0.82753596), vec2(-0.94147225, 0.42333745), 
-	vec2(-0.97706586, 0.22633662), vec2(0.00977269, 0.02378330), vec2(-0.21250551, 0.39536213), 
-	vec2(0.46426639, 0.17288661), vec2(-0.44197788, 0.33506576), vec2(0.80805167, -0.29359674), 
-	vec2(-0.66379370, 0.04307460), vec2(0.26607188, 0.79704354), vec2(0.20652568, 0.81991369), 
-	vec2(0.64959186, -0.64564514), vec2(0.93534138, 0.83045920), vec2(0.31952140, 0.95451090), 
-	vec2(-0.85996893, 0.29045370), vec2(-0.33230688, -0.34582716), vec2(0.87055498, 0.64248681), 
-	vec2(-0.19631182, -0.83353633), vec2(0.70041707, 0.58055892), vec2(0.78863981, -0.50693407));
-
 	float d = 0, s = 0;								// diffuse, specular terms
 	vec3 N, E;
-
-	float random(vec4 seed) {
-		float dot_product = dot(seed, vec4(12.9898,78.233,45.164,94.673));
-		return fract(sin(dot_product) * 43758.5453);
-	}
 
 	float calcShadow(vec4 shadow_coord) {
 		// Perspective division and transforming shadow coord from [-1, 1] to [0, 1]
 		vec3 coord = shadow_coord.xyz / shadow_coord.w;
 		coord = coord * 0.5 + 0.5;
-		// Calculating total texel size and value at shadow
+		float closestDepth = texture(shadow, coord.xy).r;
+		float currentDepth = coord.z;
+		float bias = 0.0025;
+		float s = 0.0;
 		vec2 texelSize = 1.0 / textureSize(shadow, 0);
-		float shadowVal = texture(shadow, vec3(coord.xy, coord.z)) == 0.0f ? 0.4f : 1.0f;
-		// Early bailing on extra sampling if nearby values are the same (not on shadow edge)
-		bool different = false;
-		for (int x = -1; x <= 1; x += 2) {
-			for (int y = -1; y <= 1; y += 2) {
-				float diffVal = texture(shadow, vec3(coord.xy + vec2(x, y) * texelSize, coord.z)) == 0.0f ? 0.4f : 1.0f;
-				if (diffVal != shadowVal) different = true;
+		for (int x = -1; x <= 1; ++x) {
+			for (int y = -1; y <= 1; ++y) {
+				float pcfDepth = texture(shadow, coord.xy + vec2(x,y) * texelSize).r;
+				s += currentDepth - bias > pcfDepth ? 0.4 : 1.0;
 			}
 		}
-		if (!different) return shadowVal == 1.0f ? 1.0f : shadowVal / 5.0;
-		// If on shadow edge, sample using nearby precalculated uniform random coordinates
-		for (int i = 0; i < edgeSamples; i++) {
-			int ind = int(float(edgeSamples)*random(vec4(gl_FragCoord.xyy, i))) % edgeSamples;
-			shadowVal += texture(shadow, vec3(coord.xy + uniformSamples[ind] * texelSize, coord.z)) == 0.0f ? 0.4f : 1.0f;
-		}
-		return shadowVal / (float(edgeSamples) + 5.0f);
-	}	
-
+		s /= 9.0;
+		if (coord.z > 1.0)
+			s = 0.0;
+	
+		return s;
+	}
+		
 	void Intensity(vec3 light) {
 		vec3 L = normalize(light-vPoint);
 		float dd = dot(L, N);
@@ -219,21 +200,25 @@ bool ShadowSetup() {
 	// make shader programs
 	mainProgram = LinkProgramViaCode(&mainVert, &mainFrag);
 	shadowProgram = LinkProgramViaCode(&shadowVert, &shadowFrag);
-	// create 2D image for depth-buffer
-	glGenTextures(1, &shadowTexture);
-	glBindTexture(GL_TEXTURE_2D, shadowTexture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, SHADOW_RES, SHADOW_RES, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
-	float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f }; // edge not in shadow?
-	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-	// create frame buffer for use with shadowProgram
+	// Create and bind the framebuffer object
 	glGenFramebuffers(1, &shadowFramebuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, shadowFramebuffer);
-	glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadowTexture, 0);
+
+	// Create the shadow map texture
+	glGenTextures(1, &shadowTexture);
+	glBindTexture(GL_TEXTURE_2D, shadowTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_RES, SHADOW_RES, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };  // Set border color to white
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+	// Attach the texture to the framebuffer
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowTexture, 0);
+
+	// Disable color rendering as we only need depth information
 	glDrawBuffer(GL_NONE);
 	glReadBuffer(GL_NONE);
 	bool ok = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
