@@ -1,3 +1,4 @@
+// Elijah Parker
 // LivingRoom.cpp
 
 #include <glad.h>
@@ -21,6 +22,9 @@ Mesh	room, dresser, sofa, rug, tv;
 Mesh   *meshes[] = { &room, &dresser, &sofa, &rug, &tv };
 int		nMeshes = sizeof(meshes)/sizeof(Mesh *);
 
+// Sofa Matrices
+float sofaX, sofaY, sofaZ, sofaR, sofaS;
+
 
 // Display
 
@@ -37,6 +41,8 @@ void Display() {
 void ReadObject(Mesh &m, string objName, string imgName) { m.Read(objDir+objName, imgDir+imgName); }
 
 void MakeScene() {
+	sofaX = 4, sofaY = -1.3, sofaZ = 0.0, sofaR = -90, sofaS = 8;
+
 	ReadObject(room, "OpenBox.obj", "Floor.jpg");
 	ReadObject(dresser, "dresser.obj", "dresser.tga");
 	ReadObject(sofa, "Sofa.obj", "Sofa.png");
@@ -72,21 +78,76 @@ void Resize(int width, int height) {
 	glViewport(0, 0, width, height);
 }
 
-void LightMove(int key, bool press, bool shift, bool control) {
-	if (key == GLFW_KEY_A && press == GLFW_PRESS)
-		light.x += 5.0;
-	if (key == GLFW_KEY_D && press == GLFW_PRESS)
-		light.x -= 5.0;
-	if (key == GLFW_KEY_W && press == GLFW_PRESS)
-		light.z -= 5.0;
-	if (key == GLFW_KEY_S && press == GLFW_PRESS)
-		light.z += 5.0;
-	if (key == GLFW_KEY_Q && press == GLFW_PRESS)
-		light.y += 5.0;
-	if (key == GLFW_KEY_E && press == GLFW_PRESS)
-		light.y -= 5.0;
-}
+// Keyboard inputs
 
+void KeyboardInput(int key, bool press, bool shift, bool control) {
+	// Light translate
+	if (key == GLFW_KEY_A && press == GLFW_PRESS)
+		light.x += 1.0;
+	if (key == GLFW_KEY_D && press == GLFW_PRESS)
+		light.x -= 1.0;
+	if (key == GLFW_KEY_W && press == GLFW_PRESS)
+		light.z -= 1.0;
+	if (key == GLFW_KEY_S && press == GLFW_PRESS)
+		light.z += 1.0;
+	if (key == GLFW_KEY_Q && press == GLFW_PRESS)
+		light.y += 1.0;
+	if (key == GLFW_KEY_E && press == GLFW_PRESS)
+		light.y -= 1.0;
+
+	// Sofa object translate
+	if (key == GLFW_KEY_H && press == GLFW_PRESS) {
+		sofaX += 1.0;
+		sofa.toWorld = Translate(sofaX, sofaY, sofaZ) * RotateY(sofaR) * Scale(sofaS);
+	}
+	if (key == GLFW_KEY_K && press == GLFW_PRESS) {
+		sofaX -= 1.0;
+		sofa.toWorld = Translate(sofaX, sofaY, sofaZ) * RotateY(sofaR) * Scale(sofaS);
+	}
+	if (key == GLFW_KEY_U && press == GLFW_PRESS) {
+		sofaZ -= 1.0;
+		sofa.toWorld = Translate(sofaX, sofaY, sofaZ) * RotateY(sofaR) * Scale(sofaS);
+	}
+	if (key == GLFW_KEY_J && press == GLFW_PRESS) {
+		sofaZ += 1.0;
+		sofa.toWorld = Translate(sofaX, sofaY, sofaZ) * RotateY(sofaR) * Scale(sofaS);
+	}
+	if (key == GLFW_KEY_Y && press == GLFW_PRESS) {
+		sofaY += 1.0;
+		sofa.toWorld = Translate(sofaX, sofaY, sofaZ) * RotateY(sofaR) * Scale(sofaS);
+	}
+	if (key == GLFW_KEY_I && press == GLFW_PRESS) {
+		sofaY -= 1.0;
+		sofa.toWorld = Translate(sofaX, sofaY, sofaZ) * RotateY(sofaR) * Scale(sofaS);
+	}
+
+	// Sofa object rotation
+	if (key == GLFW_KEY_V && press == GLFW_PRESS) {
+		sofaR += 1.0;
+		sofa.toWorld = Translate(sofaX, sofaY, sofaZ) * RotateY(sofaR) * Scale(sofaS);
+	}
+	if (key == GLFW_KEY_B && press == GLFW_PRESS) {
+		sofaR -= 1.0;
+		sofa.toWorld = Translate(sofaX, sofaY, sofaZ) * RotateY(sofaR) * Scale(sofaS);
+	}
+
+	// Sofa object scale
+	if (key == GLFW_KEY_N && press == GLFW_PRESS) {
+		sofaS += 1.0;
+		sofa.toWorld = Translate(sofaX, sofaY, sofaZ) * RotateY(sofaR) * Scale(sofaS);
+	}
+	if (key == GLFW_KEY_M && press == GLFW_PRESS) {
+		sofaS -= 1.0;
+		sofa.toWorld = Translate(sofaX, sofaY, sofaZ) * RotateY(sofaR) * Scale(sofaS);
+	}
+
+	// Sofa object reset
+	if (key == GLFW_KEY_1 && press == GLFW_PRESS) {
+		sofaX = 4, sofaY = -1.3, sofaZ = 0.0, sofaR = -90, sofaS = 8;
+		light = (20.0, 20.0, 20.0);
+		sofa.toWorld = Translate(sofaX, sofaY, sofaZ) * RotateY(sofaR) * Scale(sofaS);
+	}
+}
 
 // Application
 
@@ -98,12 +159,25 @@ const char *usage = R"(
 	
 	Light Movement:
 	A: translate x
-	D: translate -x;
-	W: translate -z;
-	S: translate z;
-	Q: translate y;
-	E: translate -y;
-	
+	D: translate -x
+	W: translate -z
+	S: translate z
+	Q: translate y
+	E: translate -y
+
+	Sofa Movement:
+	H: translate x
+	K: translate -x
+	U: translate -z
+	J: translate z
+	Y: translate y
+	I: translate -y
+	V: rotate clockwise
+	B: rotate counter-clockwise
+	N: scale up
+	M: scale down
+
+	1: Reset the scene
 )";
 
 
@@ -117,7 +191,7 @@ int main(int ac, char **av) {
 	RegisterMouseButton(MouseButton);
 	RegisterMouseWheel(MouseWheel);
 	RegisterResize(Resize);
-	RegisterKeyboard(LightMove);
+	RegisterKeyboard(KeyboardInput);
 	printf("Usage: %s", usage);
 	// event loop
 	while (!glfwWindowShouldClose(w)) {

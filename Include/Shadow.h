@@ -1,3 +1,6 @@
+// Elijah Parker
+// Shadow.h
+
 #ifndef SHADOW
 #define SHADOW
 

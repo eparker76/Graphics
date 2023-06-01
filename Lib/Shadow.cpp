@@ -1,3 +1,6 @@
+// Elijah Parker
+// Shadow.cpp
+
 #include "Shadow.h"
 #include "GLXtras.h"
 
@@ -79,13 +82,13 @@ const char *mainFrag = R"(
 	vec3 N, E;
 
 	float calcShadow(vec4 shadow_coord) {
-		// Perspective division and transforming shadow coord from [-1, 1] to [0, 1]
 		vec3 coord = shadow_coord.xyz / shadow_coord.w;
 		coord = coord * 0.5 + 0.5;
 		float closestDepth = texture(shadow, coord.xy).r;
 		float currentDepth = coord.z;
 		float bias = 0.0025;
 		float s = 0.0;
+		
 		vec2 texelSize = 1.0 / textureSize(shadow, 0);
 		for (int x = -1; x <= 1; ++x) {
 			for (int y = -1; y <= 1; ++y) {
